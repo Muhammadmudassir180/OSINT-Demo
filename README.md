@@ -8,8 +8,10 @@ npm install
 npm run dev        # http://localhost:5173 with hot reload
 npm run build      # type-check + production build into dist/
 npm run preview    # serve dist/ at http://localhost:4173
-npm test           # unit + UI flow tests (vitest)
+          # unit + UI flow tests (vitest)
 ```
+
+
 
 Open the app through `npm run dev` or `npm run preview`. Opening `dist/index.html` directly from the file
 system does not work: browsers block module scripts on `file://`.

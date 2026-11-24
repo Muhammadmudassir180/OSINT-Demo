@@ -46,6 +46,34 @@ export interface Case {
   progress: number;
   owner: string;
   time: string;
+  folderId?: string;
+  image?: string;
+  plan?: CollectionPlan;
+}
+
+/** What a case monitors: social terms on chosen platforms, and news terms on chosen channels. */
+export interface CollectionPlan {
+  event: string;
+  hashtags: string[];
+  keywords: string[];
+  platforms: Platform[];
+  newsKeywords: string[];
+  channels: string[];
+}
+
+export interface NewsChannel {
+  id: string;
+  name: string;
+  url: string;
+  logo: string;
+}
+
+export interface CaseFolder {
+  id: string;
+  name: string;
+  country: string;
+  image: string;
+  updated: string;
 }
 
 export interface WorkspaceUser {

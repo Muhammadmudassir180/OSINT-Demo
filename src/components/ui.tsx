@@ -53,6 +53,22 @@ export const StatusTag = memo(function StatusTag({ label, tone = 'default' }: { 
   );
 });
 
+const PRIORITY: Record<'Low' | 'Medium' | 'High', { tone: Tone; bars: number }> = { Low: { tone: 'default', bars: 1 }, Medium: { tone: 'amber', bars: 2 }, High: { tone: 'red', bars: 3 } };
+
+/** Priority as signal bars plus text, so it never reads as a status (whose amber/red marks mean running/failed). */
+export function PriorityTag({ level }: { level: keyof typeof PRIORITY }) {
+  const { tone, bars } = PRIORITY[level];
+  const color = useToneColor(tone);
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, fontSize: 12, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', color }}>
+      <svg width="12" height="11" viewBox="0 0 12 11" aria-hidden="true">
+        {[0, 1, 2].map((i) => <rect key={i} x={i * 4.25} y={7 - i * 3.5} width="3" height={4 + i * 3.5} rx=".6" fill="currentColor" opacity={i < bars ? 1 : 0.28} />)}
+      </svg>
+      {level} priority
+    </Box>
+  );
+}
+
 export function PageHeader({ title, description, actions, crumb }: { title: ReactNode; description: ReactNode; actions?: ReactNode; crumb?: ReactNode }) {
   return (
     <Reveal>

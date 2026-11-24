@@ -1,68 +1,82 @@
-import { Box, Button, ButtonBase, Grid, LinearProgress, Stack, Typography } from '@mui/material';
-import { Add, Download, PeopleOutline } from '@mui/icons-material';
-import { Mono, PageHeader, Reveal, StatCard, StatusTag } from '../components/ui';
-import { csvDownload } from '../lib/osint';
+import { useState } from 'react';
+import { Box, Button, ButtonBase, Grid, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Add, FolderOutlined, Search } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { CaseCard } from '../components/CaseCard';
+import { EmptyState, Mono, PageHeader, Reveal, StatCard } from '../components/ui';
 import { useAppDispatch, useAppState } from '../state/AppContext';
+import type { Case } from '../types';
+
+const FILTERS = ['All', 'Active', 'In review', 'Completed'] as const;
 
 export default function Hub() {
   const { cases } = useAppState();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<'All' | Case['status']>('All');
+  const [query, setQuery] = useState('');
   const newCase = () => dispatch({ type: 'openModal', modal: { type: 'case', prefill: '' } });
-  const open = cases.filter((c) => c.status !== 'Completed').length;
+  const open = cases.filter((c) => c.status !== 'Completed');
+  const count = (f: (typeof FILTERS)[number]) => (f === 'All' ? cases.length : cases.filter((c) => c.status === f).length);
+  const q = query.trim().toLowerCase();
+  // Keep each case's index in the full list: the details dialog looks cases up by it.
+  const shown = cases.map((c, i) => [c, i] as const).filter(([c]) => (filter === 'All' || c.status === filter) && (!q || `${c.id} ${c.title} ${c.description}`.toLowerCase().includes(q)));
   return (
     <Stack spacing={3}>
       <PageHeader
         title="Intelligence Hub"
-        description="Organize investigations, build evidence-led cases, and monitor review status."
+        description="Open investigations, track what each one monitors, and file finished work in Case files."
         actions={
           <>
-            <Button startIcon={<Download />} onClick={() => csvDownload('demo_case_list.csv', [['ID', 'Title', 'Status', 'Owner', 'Priority', 'Progress'], ...cases.map((x) => [x.id, x.title, x.status, x.owner, x.severity, x.progress])])}>Export cases</Button>
-            <Button variant="contained" startIcon={<Add />} onClick={newCase}>New case</Button>
+            <Button startIcon={<FolderOutlined />} onClick={() => navigate('/hub/archive')}>Case files</Button>
+            <Button variant="contained" startIcon={<Add />} onClick={newCase}>New investigation</Button>
           </>
         }
       />
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 4 }}><StatCard label="All cases" value={cases.length} note="Across your demo workspace" /></Grid>
-        <Grid size={{ xs: 12, sm: 4 }}><StatCard label="Open" value={open} note="Active or in review" tone="amber" order={1} /></Grid>
-        <Grid size={{ xs: 12, sm: 4 }}><StatCard label="Completed" value={cases.length - open} note="Reviewed and archived" tone="green" order={2} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><StatCard label="All cases" value={cases.length} note="Across your demo workspace" /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><StatCard label="Open" value={open.length} note="Active or in review" tone="blue" order={1} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><StatCard label="High priority" value={open.filter((c) => c.severity === 'High').length} note="Open cases marked High" tone="red" order={2} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><StatCard label="Completed" value={cases.length - open.length} note="Reviewed and closed" tone="green" order={3} /></Grid>
       </Grid>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-        <StatusTag label="Investigations board" tone="blue" />
-        <Typography variant="body2" color="text.secondary">Select a case to view its metadata</Typography>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
+        <ToggleButtonGroup size="small" exclusive value={filter} onChange={(_, v: typeof filter | null) => v && setFilter(v)} aria-label="Filter cases by status" sx={{ flexWrap: 'wrap' }}>
+          {FILTERS.map((f) => (
+            <ToggleButton key={f} value={f}>{f}<Mono sx={{ ml: 1, fontSize: 12, color: 'text.secondary' }}>{count(f)}</Mono></ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+        <TextField
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by title, ID or objective"
+          sx={{ width: { xs: '100%', sm: 300 } }}
+          slotProps={{ htmlInput: { 'aria-label': 'Search cases' }, input: { startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment> } }}
+        />
       </Stack>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-        {cases.map((c, i) => (
-          <Reveal key={c.id} order={i} sx={{ height: '100%' }}>
-            <ButtonBase
-              onClick={() => dispatch({ type: 'openModal', modal: { type: 'caseview', index: i } })}
-              sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'left', p: 2.5, borderRadius: 1, border: 1, borderColor: 'divider', bgcolor: 'background.paper', transition: 'border-color 110ms, transform 240ms', '&:hover': { borderColor: 'primary.main', transform: 'translateY(-2px)' } }}
-            >
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                <Mono sx={{ color: 'text.secondary', fontSize: 12 }}>{c.id}</Mono>
-                <StatusTag label={c.status} tone={c.status === 'Completed' ? 'green' : c.status === 'In review' ? 'amber' : 'blue'} />
-              </Stack>
-              <Typography variant="h3" sx={{ mt: 1.5 }}>{c.title}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75, flex: 1 }}>{c.description}</Typography>
-              <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 2, mb: 0.75 }}>
-                <Typography variant="caption" color="text.secondary">Review progress</Typography>
-                <Mono sx={{ fontSize: 12, fontWeight: 600 }}>{c.progress}%</Mono>
-              </Stack>
-              <LinearProgress variant="determinate" value={c.progress} color={c.progress === 100 ? 'success' : 'primary'} aria-label={`Review progress ${c.progress}%`} />
-              <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 1.5, borderTop: 1, borderColor: 'divider', color: 'text.secondary' }}>
-                <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}><PeopleOutline sx={{ fontSize: 16 }} /><Typography variant="caption">{c.owner}</Typography></Stack>
-                <Typography variant="caption">{c.time}</Typography>
-              </Stack>
-            </ButtonBase>
-          </Reveal>
-        ))}
-        <Reveal order={cases.length} sx={{ height: '100%' }}>
-          <ButtonBase onClick={newCase} sx={{ width: '100%', height: '100%', minHeight: 230, flexDirection: 'column', gap: 1, borderRadius: 1, border: '1px dashed', borderColor: 'divider', bgcolor: 'tokens.surface2', color: 'text.secondary', '&:hover': { borderColor: 'primary.main', color: 'text.primary' } }}>
-            <Add fontSize="large" />
-            <Typography variant="h3" color="text.primary">Create new case</Typography>
-            <Typography variant="body2">Start a structured investigation</Typography>
-          </ButtonBase>
-        </Reveal>
-      </Box>
+      {shown.length ? (
+        <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+          {shown.map(([c, i], n) => (
+            <Reveal key={c.id} order={n} sx={{ height: '100%' }}>
+              <CaseCard c={c} index={i} />
+            </Reveal>
+          ))}
+          {filter === 'All' && !q && (
+            <Reveal order={shown.length} sx={{ height: '100%' }}>
+              <ButtonBase onClick={newCase} sx={{ width: '100%', height: '100%', minHeight: 230, flexDirection: 'column', gap: 1, borderRadius: 1, border: '1px dashed', borderColor: 'divider', bgcolor: 'tokens.surface2', color: 'text.secondary', '&:hover': { borderColor: 'primary.main', color: 'text.primary' } }}>
+                <Add fontSize="large" />
+                <Typography variant="h3" color="text.primary">New investigation</Typography>
+                <Typography variant="body2">Write a brief, then choose what to monitor</Typography>
+              </ButtonBase>
+            </Reveal>
+          )}
+        </Box>
+      ) : (
+        <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+          <EmptyState icon={<Search />} title="No cases match" action={<Button onClick={() => { setFilter('All'); setQuery(''); }}>Clear filters</Button>}>
+            Try another status or search term.
+          </EmptyState>
+        </Box>
+      )}
     </Stack>
   );
 }

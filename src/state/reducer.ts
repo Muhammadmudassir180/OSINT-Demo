@@ -1,15 +1,16 @@
-import { seedBulkJobs, seedCases, seedUsers } from '../data/demo';
+import { seedBulkJobs, seedCases, seedChannels, seedFolders, seedUsers } from '../data/demo';
 import { socialPlatforms } from '../data/profiles';
 import { crawlDuration, isOverdue, matchProfiles } from '../lib/osint';
-import type { AuditRow, BulkJob, Case, CrawlJob, FbCategory, Granularity, JobStatus, PeriodKey, Platform, Profile, Role, SearchMode, SeriesKey, WorkspaceUser } from '../types';
+import type { AuditRow, BulkJob, Case, CaseFolder, NewsChannel, CrawlJob, FbCategory, Granularity, JobStatus, PeriodKey, Platform, Profile, Role, SearchMode, SeriesKey, WorkspaceUser } from '../types';
 
 // shortcut: SKIP_LOGIN opens the workspace directly during development; set it to false to show the sign-in screen again.
 export const SKIP_LOGIN = true;
 
 export type Modal =
   | { type: 'crawl'; profileId: string }
-  | { type: 'case'; prefill: string }
+  | { type: 'case'; prefill: string; folderId?: string }
   | { type: 'caseview'; index: number }
+  | { type: 'folder' }
   | { type: 'invite' }
   | { type: 'forgot' }
   | { type: 'custom' }
@@ -42,6 +43,8 @@ export interface AppState {
   granularity: Granularity;
   series: Record<SeriesKey, boolean>;
   cases: Case[];
+  folders: CaseFolder[];
+  channels: NewsChannel[];
   users: WorkspaceUser[];
   bulkJobs: BulkJob[];
   bulkLines: string;
@@ -69,6 +72,8 @@ export function initialState(archive: CrawlJob[]): AppState {
     granularity: 'Daily',
     series: { total: true, completed: true, failed: false },
     cases: seedCases,
+    folders: seedFolders,
+    channels: seedChannels,
     users: seedUsers,
     bulkJobs: seedBulkJobs,
     bulkLines: '',
@@ -108,7 +113,9 @@ export type Action =
   | { type: 'closeModal' }
   | { type: 'toast'; text: string }
   | { type: 'clearToast' }
-  | { type: 'addCase'; data: Pick<Case, 'title' | 'description' | 'severity' | 'owner'> }
+  | { type: 'addCase'; data: Pick<Case, 'title' | 'description' | 'severity' | 'owner'> & Partial<Pick<Case, 'folderId' | 'image' | 'plan'>> }
+  | { type: 'addChannel'; channel: NewsChannel }
+  | { type: 'addFolder'; name: string; image: string }
   | { type: 'addUser'; data: Pick<WorkspaceUser, 'name' | 'email' | 'role'> }
   | { type: 'setUserRole'; index: number; role: WorkspaceUser['role'] }
   | { type: 'toggleUser'; index: number }
@@ -183,7 +190,12 @@ export function reducer(s: AppState, a: Action): AppState {
         ...s,
         modal: null,
         cases: [{ id: 'CASE-' + (900 + s.cases.length), status: 'Active', progress: 0, time: 'Created just now', ...a.data }, ...s.cases],
+        folders: s.folders.map((f) => (f.id === a.data.folderId ? { ...f, updated: 'Updated just now' } : f)),
       };
+    case 'addChannel':
+      return { ...s, channels: [...s.channels, a.channel] };
+    case 'addFolder':
+      return { ...s, modal: null, folders: [{ id: 'FLD-' + (101 + s.folders.length), name: a.name, country: '', image: a.image, updated: 'Created just now' }, ...s.folders] };
     case 'addUser':
       return { ...s, modal: null, users: [...s.users, { ...a.data, status: 'Invited', last: 'Pending' }] };
     case 'setUserRole':

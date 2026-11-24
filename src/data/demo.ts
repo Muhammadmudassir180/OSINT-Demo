@@ -1,4 +1,4 @@
-import type { AuditRow, BulkJob, Case, Entity, FeedItem, PeriodKey, PeriodStats, WorkspaceUser } from '../types';
+import type { AuditRow, BulkJob, Case, CaseFolder, NewsChannel, Entity, FeedItem, PeriodKey, PeriodStats, WorkspaceUser } from '../types';
 
 // Every record in this file is fictional sample data.
 
@@ -9,16 +9,36 @@ export const entities: Entity[] = [
   { id: 'EN-2051', name: 'Dockside Logistics', type: 'Organization' },
 ];
 
+// shortcut: flag images load from flagcdn.com, so they need a network connection; bundle local copies if the demo must run offline.
+const flag = (code: string) => `https://flagcdn.com/w640/${code}.png`;
+export const demoDriveImages = ['gb', 'de', 'ae', 'tr', 'sg', 'br'].map(flag);
+
+export const seedFolders: CaseFolder[] = [
+  { id: 'FLD-101', name: 'Coastal Logistics Inquiries', country: 'Pakistan', image: flag('pk'), updated: 'Updated 2 hours ago' },
+  { id: 'FLD-102', name: 'Procurement Network Files', country: 'United States', image: flag('us'), updated: 'Updated yesterday' },
+  { id: 'FLD-103', name: 'Port Authority Reviews', country: 'Netherlands', image: flag('nl'), updated: 'Updated 3 days ago' },
+  { id: 'FLD-104', name: 'Shipping Ownership Records', country: 'Japan', image: flag('jp'), updated: 'Updated last week' },
+];
+
+export const seedChannels: NewsChannel[] = [
+  { id: 'ch-bbc', name: 'BBC News', url: 'https://www.bbc.com/news', logo: '' },
+  { id: 'ch-reuters', name: 'Reuters', url: 'https://www.reuters.com', logo: '' },
+  { id: 'ch-aljazeera', name: 'Al Jazeera', url: 'https://www.aljazeera.com', logo: '' },
+  { id: 'ch-cnn', name: 'CNN', url: 'https://www.cnn.com', logo: '' },
+  { id: 'ch-dawn', name: 'Dawn', url: 'https://www.dawn.com', logo: '' },
+  { id: 'ch-geo', name: 'Geo News', url: 'https://www.geo.tv', logo: '' },
+];
+
 export const seedCases: Case[] = [
-  { id: 'CASE-0824', title: 'Regional Freight Network Review', description: 'Map potential relationships among simulated regional logistics entities and their public footprints.', status: 'In review', severity: 'Medium', progress: 72, owner: 'Analyst Team', time: 'Updated 18 min ago' },
-  { id: 'CASE-0817', title: 'Public Procurement Intelligence', description: 'Review synthetic organization records, partnership mentions and website references.', status: 'Active', severity: 'High', progress: 46, owner: 'Operations Group', time: 'Updated 2 hours ago' },
-  { id: 'CASE-0799', title: 'Entity Relationship Mapping', description: 'Organize a demo graph of corporate affiliations with source-level attribution.', status: 'Completed', severity: 'Low', progress: 100, owner: 'Investigations', time: 'Updated yesterday' },
-  { id: 'CASE-0831', title: 'Port Labor Sentiment Monitoring', description: 'Track public discussion about dock labor conditions across synthetic community groups and pages.', status: 'Active', severity: 'High', progress: 18, owner: 'Operations Group', time: 'Updated 35 min ago' },
-  { id: 'CASE-0829', title: 'Brightwater Shipping Ownership Review', description: 'Compare public registry mentions and social profiles for a fictional shipping company.', status: 'In review', severity: 'Medium', progress: 64, owner: 'Analyst Team', time: 'Updated 1 hour ago' },
-  { id: 'CASE-0826', title: 'Harbor Watch Narrative Tracking', description: 'Follow recurring narratives in a demo community group and its linked page.', status: 'Active', severity: 'Medium', progress: 39, owner: 'Investigations', time: 'Updated 3 hours ago' },
-  { id: 'CASE-0812', title: 'Kestrel Analytics Source Validation', description: 'Check which simulated sources support claims made by a fictional research firm.', status: 'Completed', severity: 'Low', progress: 100, owner: 'Analyst Team', time: 'Updated 2 days ago' },
-  { id: 'CASE-0808', title: 'Lumen Market Vendor Mapping', description: 'Map vendor pages connected to a demo local market and note unverified links.', status: 'In review', severity: 'Low', progress: 81, owner: 'Investigations', time: 'Updated 3 days ago' },
-  { id: 'CASE-0790', title: 'Cross-Platform Username Correlation', description: 'Correlate identical usernames across demo platforms and record confidence for each match.', status: 'Completed', severity: 'Medium', progress: 100, owner: 'Operations Group', time: 'Updated last week' },
+  { id: 'CASE-0824', title: 'Regional Freight Network Review', description: 'Map potential relationships among simulated regional logistics entities and their public footprints.', status: 'In review', severity: 'Medium', progress: 72, owner: 'Analyst Team', time: 'Updated 18 min ago', folderId: 'FLD-101' },
+  { id: 'CASE-0817', title: 'Public Procurement Intelligence', description: 'Review synthetic organization records, partnership mentions and website references.', status: 'Active', severity: 'High', progress: 46, owner: 'Operations Group', time: 'Updated 2 hours ago', folderId: 'FLD-102' },
+  { id: 'CASE-0799', title: 'Entity Relationship Mapping', description: 'Organize a demo graph of corporate affiliations with source-level attribution.', status: 'Completed', severity: 'Low', progress: 100, owner: 'Investigations', time: 'Updated yesterday', folderId: 'FLD-104' },
+  { id: 'CASE-0831', title: 'Port Labor Sentiment Monitoring', description: 'Track public discussion about dock labor conditions across synthetic community groups and pages.', status: 'Active', severity: 'High', progress: 18, owner: 'Operations Group', time: 'Updated 35 min ago', folderId: 'FLD-103' },
+  { id: 'CASE-0829', title: 'Brightwater Shipping Ownership Review', description: 'Compare public registry mentions and social profiles for a fictional shipping company.', status: 'In review', severity: 'Medium', progress: 64, owner: 'Analyst Team', time: 'Updated 1 hour ago', folderId: 'FLD-104' },
+  { id: 'CASE-0826', title: 'Harbor Watch Narrative Tracking', description: 'Follow recurring narratives in a demo community group and its linked page.', status: 'Active', severity: 'Medium', progress: 39, owner: 'Investigations', time: 'Updated 3 hours ago', folderId: 'FLD-103' },
+  { id: 'CASE-0812', title: 'Kestrel Analytics Source Validation', description: 'Check which simulated sources support claims made by a fictional research firm.', status: 'Completed', severity: 'Low', progress: 100, owner: 'Analyst Team', time: 'Updated 2 days ago', folderId: 'FLD-102' },
+  { id: 'CASE-0808', title: 'Lumen Market Vendor Mapping', description: 'Map vendor pages connected to a demo local market and note unverified links.', status: 'In review', severity: 'Low', progress: 81, owner: 'Investigations', time: 'Updated 3 days ago', folderId: 'FLD-101' },
+  { id: 'CASE-0790', title: 'Cross-Platform Username Correlation', description: 'Correlate identical usernames across demo platforms and record confidence for each match.', status: 'Completed', severity: 'Medium', progress: 100, owner: 'Operations Group', time: 'Updated last week', folderId: 'FLD-102' },
 ];
 
 export const seedUsers: WorkspaceUser[] = [
